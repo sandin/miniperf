@@ -6,3 +6,5 @@
 /obj/
 /prebuilt/
 /temp/
+/.vs
+/.vscode

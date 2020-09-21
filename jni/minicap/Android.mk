@@ -7,12 +7,21 @@ LOCAL_SRC_FILES := \
 	JpgEncoder.cpp \
 	SimpleServer.cpp \
 	minicap.cpp \
+	perfcat.pb.cc\
 
 LOCAL_STATIC_LIBRARIES := \
 	libjpeg-turbo \
 
 LOCAL_SHARED_LIBRARIES := \
 	minicap-shared \
+
+LOCAL_C_INCLUDES := \
+	$(LOCAL_PATH)/include \
+	$(LOCAL_PATH)/google \
+
+LOCAL_EXPORT_C_INCLUDES := \
+	$(LOCAL_PATH)/include \
+	$(LOCAL_PATH)/google \
 
 include $(BUILD_STATIC_LIBRARY)
 

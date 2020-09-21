@@ -21,6 +21,7 @@
 #include "JpgEncoder.hpp"
 #include "SimpleServer.hpp"
 #include "Projection.hpp"
+#include "perfcat.pb.h"
 
 #define BANNER_VERSION 1
 #define BANNER_SIZE 24
@@ -442,12 +443,14 @@ main(int argc, char* argv[]) {
     return EXIT_SUCCESS;
   }
 
+//开始建立socket
   if (!server.start(sockname)) {
     MCERROR("Unable to start server on namespace '%s'", sockname);
     goto disaster;
   }
 
   // Prepare banner for clients.
+  // 传输基本信息banner只传输一次，传输信息 https://www.cnblogs.com/xiand/p/6724399.html
   unsigned char banner[BANNER_SIZE];
   banner[0] = (unsigned char) BANNER_VERSION;
   banner[1] = (unsigned char) BANNER_SIZE;
@@ -459,14 +462,17 @@ main(int argc, char* argv[]) {
   banner[22] = (unsigned char) desiredInfo.orientation;
   banner[23] = quirks;
 
+  //接收到client的请求
   int fd;
   while (!gWaiter.isStopped() && (fd = server.accept()) > 0) {
     MCINFO("New client connection");
 
+    //pumps发送指令
     if (pumps(fd, banner, BANNER_SIZE) < 0) {
       close(fd);
       continue;
     }
+    
 
     int pending, err;
     while (!gWaiter.isStopped() && (pending = gWaiter.waitForFrame()) > 0) {

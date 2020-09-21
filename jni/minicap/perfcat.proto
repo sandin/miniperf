@@ -1,0 +1,549 @@
+// Copyright 2015 The gRPC Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+syntax = "proto3";
+
+package perfcat;
+
+option java_multiple_files = true;
+option java_package = "cn.testplus.perfcat.proto";
+option java_outer_classname = "PerfcatProto";
+
+message PerfcatAppProtocol {
+  oneof protocol {
+    GetAppInfoReq getAppInfoReq = 1;   // 获取应用列表
+    GetAppInfoRsp getAppInfoRsp = 2;
+    GetScreenInfoReq getScreenInfoReq = 3;        // 获取屏幕信息
+    GetScreenInfoRsp getScreenInfoRsp = 4;
+    GetLMKThresholdReq getLMKThresholdReq = 5;     // 获取 long memory killer阈值
+    GetLMKThresholdRsp getLMKThresholdRsp = 6;
+    CheckOverlayPermissionReq checkOverlayPermissionReq = 7;    // 获取浮窗权限
+    CheckOverlayPermissionRsp checkOverlayPermissionRsp = 8;
+    AppHelloReq AppHelloReq = 9;                 // hello
+    AppHelloRsp appHelloRsp = 10;
+  }
+}
+
+
+message PerfcatServerProtocol {
+  oneof protocol {
+    ProfileReq profileReq = 1;
+    ProfileRsp profileRsp = 2;
+    GetMemoryUsageReq getMemoryUsageReq = 3;
+    GetMemoryUsageRsp getMemoryUsageRsp = 4;
+    StopProfileReq stopProfileReq = 5;
+    StopProfileRsp stopProfileRsp = 6;
+    CheckDeviceReq checkDeviceReq = 7;
+    CheckDeviceRsp checkDeviceRsp = 8;
+    ProfileNtf profileNtf = 9;
+    GetCpuMaxFreqReq getCpuMaxFreqReq = 10;
+    GetCpuMaxFreqRsp getCpuMaxFreqRsp = 11;
+    ToggleInterestingFiledNTF toggleInterestingFiledNTF = 12;
+    ProfileStartedNTF profileStartedNTF = 13;
+    ProfileStoppedNTF profileStoppedNTF = 14;
+    ProcessNotFoundNTF processNotFoundNTF = 15;
+    ProcessFoundNTF processFoundNTF = 16;
+    GetBatteryInfoReq getBatteryInfoReq = 17;
+    GetBatteryInfoRsp getBatteryInfoRsp = 18;
+    AppClosedNTF appClosedNTF = 19;
+    ProfileNTFACK profileNTFACK = 20;
+    PrepareWifiProfileNTF prepareWifiProfileNTF = 21;
+    GetAppInfoReq getAppInfoReq = 22;
+    GetAppInfoRsp getAppInfoRsp = 23;
+    EmptyRsp emptyRsp = 24;
+    HelloReq helloReq = 25;
+    ExecuteShellCommandReq executeShellCommandReq = 26;
+    ExecuteShellCommandRsp executeShellCommandRsp = 27;
+    RegisterAppReq registerAppReq = 28;
+    ResumeProfileReq resumeProfileReq = 29;
+    ResumeProfileRsp resumeProfileRsp = 30;
+    GetDataFromAppReq getDataFromAppReq = 31;
+    GetDataFromAppRsp getDataFromAppRsp = 32;
+    SetScreenshotIntervalReq setScreenshotIntervalReq = 33;
+    EnableFloatingWindowReq enableFloatingWindowReq = 34;
+//    INTERNAL_NOT_SET = 0
+
+    ProfileIOSNtf profileIOSNtf = 10001; // iOS数据
+  }
+}
+
+/**
+ * 1. 开始Profile请求
+ */
+message ProfileReq {// tz3
+  int32 e2 = 1;                 // TODO
+
+  enum DataType {
+    DATAID_NONE = 0;  // NONE
+    CPU_USAGE = 1;  // CPU_USAGE
+    CORE_FREQUENCY = 2;  // CPU_FREQ
+    GPU_USAGE = 3;  // GPU_USAGE
+    GPU_FREQ = 4;  // GPU_FREQ
+    FPS = 5;  // FPS
+    NETWORK_USAGE = 6;  // NETWORK
+    SCREEN_SHOT = 8;  // SCREENSHOT
+    MEMORY = 9;  // MEMORY_USAGE
+    BATTERY = 10; // POWER
+    CPU_TEMPERATURE = 11; // CPU_TEMPERATURE
+    FRAME_TIME = 12; // FRAME_DETAIL
+    ANDROID_MEMORY_DETAIL = 13; // MEMORY_DETAIL
+    CORE_USAGE = 14; // CPU_CORE_USAGE
+
+    CTX_SWITCH = 15;  // TODO
+    WAKEUP = 16;  // TODO
+    IOS_GPU_USAGE = 17;  // TODO
+    IOS_ENERGY_USAGE = 18;  // TODO
+  }
+  repeated DataType dataTypes = 2; // 开启功能类型
+  ProfileApp profileApp = 3;    // profile的目标应用
+  bool isUSB = 4;              // TODO: isDebug?
+}
+message ProfileApp {// udz
+  oneof target {
+    ProfileAppInfo appInfo = 1;
+    ProfileAppPidName pidName = 2;
+  }
+}
+message ProfileAppPidName {// xhw
+  int32 pid = 1;              // PID
+  string name = 2;            // TODO
+}
+message ProfileAppInfo {// iha
+  string processName = 1;      // 进程名 // TODO
+  int32  userId = 2;           // userId
+  string packageName = 3;      // 应用包名
+}
+
+/**
+ * 2. 开始Profile响应
+ * aix
+ */
+message ProfileRsp {
+  int64 timestamp = 1;        // 客户端时间戳
+  int32 errorCode = 2;        // 错误码，0正常，非0错误
+  int32 sessionId = 3;        // Profile会话ID
+}
+
+/**
+ * 3. 获取内存 请求
+ */
+message GetMemoryUsageReq {
+  int32 pid = 1;
+  int64 unknow = 2 ;//TODO 暂时未知表示什么
+}
+
+/**
+ * 4. TODO
+ */
+message GetMemoryUsageRsp {
+  Memory memory = 1;
+}
+
+/**
+ * 5. TODO
+ */
+message StopProfileReq {
+}
+
+/**
+ * 6. TODO
+ */
+message StopProfileRsp {
+}
+
+/**
+ * 7. 检查设备功能请求
+ */
+message CheckDeviceReq {
+}
+
+/**
+    * 8. 检查设备功能响应
+    */
+message CheckDeviceRsp {
+  bool e2 = 1;             // TODO
+  bool gpuFreq = 2;        // 支持GPU频率
+  bool gpuUsage = 3;       // 支持CPU使用率
+  bool sw0 = 4;            // TODO
+  bool cpuTemperature = 5; // 支持CPU温度
+}
+
+/**
+ * 9. 数据报文
+ */
+message ProfileNtf {
+  int32 index = 1;                    // 通信序列号，从0开始
+  CpuUsage cpuUsage = 2;              // CPU使用率
+  CpuFreq cpuFreq = 3;                // CPU频率
+  GpuUsage gpuUsage = 4;              // GPU使用率
+  GpuFreq gpuFreq = 5;                // GPU频率
+  FPS fps = 6;                        // FPS
+  Screenshot screenshot = 9;          // 截图
+  Memory memory = 10;                 // 内存
+  Network network = 11;               // 网络
+  Power power = 12;                   // 电池
+  int64 timestamp = 13;               // unix时间戳(毫秒)
+  Temp temp = 14;                     // 温度
+  FrameTime frameTime = 15;           // 帧耗时
+  CoreUsage coreUsage = 16;           // CPU多核使用率
+  VirtualMemory virtualMemory = 17;   // 虚拟内存
+}
+
+message Screenshot {
+  bytes data = 1;                     // 图片bytes array
+  enum Orientation {
+    none = 0;
+    landscape_left = 1;             // rotate -90
+    landscape_right = 2;            // rotate 90
+    portrait = 3;
+  }
+  Orientation orientation = 3;        // 图片方向
+
+}
+message VirtualMemory {
+  int32 virtualMemory = 1;            // 虚拟内存(MB)
+}
+message Power {
+  int32 current = 1;
+  int32 voltage = 2;
+}
+message Temp {
+  int32 temp = 1;                     // CPU温度(℃)
+}
+message CpuUsage {
+  float appUsage = 1;                 // APP CPU使用率(%)
+  float totalUsage = 2;               // 总CPU使用率(%)
+}
+message FPS {
+  float fps = 1;
+  int32 jank = 3;
+  int32 bigJank = 4;
+}
+message CoreUsage {
+  repeated float coreUsage = 1;       // CPU多核使用率(%)
+}
+message FrameTime {
+  repeated int64 frameTime = 1;       // 帧耗时(us)
+}
+message Network {
+  int32 upload = 1;               // 上传(B)
+  int32 download = 2;             // 下载(B)
+}
+message Memory {
+  int32 pss = 1;                  // PSS(MB)
+  int32 swap = 2;                 // SWAP交互(MB)
+  int32 virtualMemory = 3;        // TODO 应该为long
+  MemoryDetail memoryDetail = 5;  // 内存详情
+}
+message MemoryDetail {
+  int32 gfx = 1;                  // GFX(KB)
+  int32 gl = 2;                   // GL(KB)
+  int32 nativePss = 3;            // NativePss(KB)
+  int32 unknown = 4;              // Unknown(KB)
+}
+message GpuFreq {
+  int32 gpuFreq = 1;
+}
+message GpuUsage {
+  float gpuUsage = 1;             // GPU使用率(%)
+}
+message CpuFreq {
+  repeated int32 cpuFreq = 1;     // CPU频率(MHz)
+}
+
+/**
+ * 10. 获取CPU最大频率请求
+ */
+message GetCpuMaxFreqReq {
+}
+
+/**
+ * 11. 获取CPU最大频率响应
+ * cv1
+ */
+message GetCpuMaxFreqRsp {
+  repeated int32 minFreq = 1;     // CPU多核最小频率(MHz)
+  repeated int32 maxFreq = 2;     // CPU多核最大频率(MHz)
+}
+
+/**
+ * 12. TODO
+ */
+message ToggleInterestingFiledNTF {
+  int32 dataType = 1; // 开启功能类型
+}
+
+/**
+ * 13. TODO
+ */
+message ProfileStartedNTF {
+
+}
+
+/**
+ * 14. TODO
+ */
+message ProfileStoppedNTF {
+}
+
+/**
+ * 15. TODO
+ */
+message ProcessNotFoundNTF {
+}
+
+/**
+ * 16. TODO
+ */
+message ProcessFoundNTF {
+}
+
+/**
+ * 17. 请求电池数据
+ */
+message GetBatteryInfoReq {
+}
+
+/**
+ * 18. 获取电池信息 响应
+ */
+message GetBatteryInfoRsp {
+  Power power = 1;
+}
+
+/**
+ * 19. TODO
+ */
+message AppClosedNTF {
+}
+
+/**
+ * 20. ProfileNTF确认请求
+ */
+message ProfileNTFACK {
+  int32 index = 1;                    // 下一个通信序列号，从0开始
+}
+
+/**
+ * 21. TODO
+ */
+message PrepareWifiProfileNTF {
+}
+
+/**
+ * 22. 获取应用列表请求
+ */
+message GetAppInfoReq {
+}
+
+/**
+ * 23. 获取应用列表响应
+ */
+message GetAppInfoRsp {
+  repeated AppInfo appInfo = 1;
+}
+message AppInfo {
+  string packageName = 1;
+  string version = 2;
+  bytes icon = 3;
+  string label = 4;
+  int32 pid = 5;
+  repeated string processList = 6;
+  bool isSystemApp = 7;
+  bool isDebuggable = 8;
+}
+
+/**
+ * 24. TODO
+ */
+message EmptyRsp {
+}
+
+
+/**
+ * 25. Profile握手请求
+ */
+message HelloReq {
+}
+
+/**
+ * 26. TODO
+ */
+message ExecuteShellCommandReq {
+}
+
+/**
+ * 27. TODO
+ */
+message ExecuteShellCommandRsp {
+}
+
+/**
+ * 28. TODO
+ */
+message RegisterAppReq {
+}
+
+/**
+ * 29. TODO
+ */
+message ResumeProfileReq {
+}
+
+/**
+ * 30. TODO
+ */
+message ResumeProfileRsp {
+}
+
+/**
+ * 31. TODO
+ */
+message GetDataFromAppReq {
+}
+
+/**
+ * 32. TODO
+ */
+message GetDataFromAppRsp {
+}
+
+/**
+ * 33. TODO
+ */
+message SetScreenshotIntervalReq {
+}
+
+/**
+ * 34. TODO
+ */
+message EnableFloatingWindowReq {
+}
+
+/**
+ * 35. 获取屏幕信息请求
+ */
+message GetScreenInfoReq {
+
+}
+/**
+ * 36. 获取屏幕信息响应
+ */
+message GetScreenInfoRsp {
+  float screenSize = 1;
+  int32  width = 2 ;
+  int32  height = 3;
+}
+/**
+ * 37. 获取内存阈值请求
+ */
+message  GetLMKThresholdReq{
+
+}
+
+/**
+ * 38. 获取内存阈值响应
+ */
+
+message  GetLMKThresholdRsp{
+  int32 memoryThreshold = 1;
+}
+/**
+ * 39. 检查浮窗权限请求
+ */
+message  CheckOverlayPermissionReq{
+
+}
+
+/**
+ * 40. 检查浮窗请求响应
+ */
+
+message  CheckOverlayPermissionRsp{
+  bool overLayPermission = 1;
+}
+/**
+ * 41. AppHelloReq
+ */
+message  AppHelloReq{
+
+}
+
+
+/**
+ * 42. AppEmptyRsp
+ */
+message  AppHelloRsp{
+  string message = 1;
+}
+
+
+
+
+/* ------------------------- iOS --------------------------- */
+
+
+message ProfileIOSNtf {
+  int32 index = 1;                    // 通信序列号，从0开始
+  int64 timestamp = 2;                // unix时间戳(毫秒)
+  Screenshot screenshot = 3;          // 截图
+  FPS fps = 4;                        // FPS
+  iOSFrameTime frameTime = 5;         // 帧耗时
+  CpuUsage cpuUsage = 6;              // CPU使用率
+  iOSMemory memory = 7;               // 内存
+  iOSGpuUsage gpuUsage = 8;           // GPU使用率
+  Network network = 9;                // 网络
+  Power power = 10;                   // 电池
+  iOSContextSwitch contextSwitch = 11; // 上下文切换
+  iOSWakeups wakeups = 12;            // Wakeups
+  iOSEnergyUsage energyUsage = 13;    // 能耗
+}
+
+message iOSFrameTime {
+  repeated iOSFrameRecord frameTime = 1; // 帧耗时列表
+}
+
+message iOSFrameRecord {
+  int64 timestamp = 1;            // 时间戳
+  float frameTime = 2;            // 帧耗时(us)
+}
+
+message iOSMemory {
+  int32 memory = 1;               // PSS(MB)
+  int32 virtualMemory = 2;
+  int32 realMemory = 3;
+  int32 xcodeMemory = 4;
+}
+
+message iOSGpuUsage {
+  float gpuRender = 1;             // GPU使用率(%)
+  float gpuTiler = 2;             // GPU使用率(%)
+  float gpuDevice = 3;             // GPU使用率(%)
+}
+
+message iOSContextSwitch {
+  int32 contextSwitch = 1;
+}
+
+message iOSWakeups {
+  int32 wakeups = 1;
+}
+
+message iOSEnergyUsage {
+  int32 cpuEnergy = 1;
+  int32 gpuEnergy = 2;
+  int32 networkEnergy = 3;
+  int32 locationEnergy = 4;
+  int32 displayEnergy = 5;
+  int32 overheadEnergy = 6;
+}
