@@ -6,6 +6,7 @@
 #include <signal.h>
 #include <sys/socket.h>
 #include <thread>
+#include <android/log.h>
 
 #include <cmath>
 #include <condition_variable>
@@ -29,6 +30,9 @@
 #define DEFAULT_SOCKET_NAME "minicap"
 #define DEFAULT_DISPLAY_ID 0
 #define DEFAULT_JPG_QUALITY 80
+#define MINIOGI(...) __android_log_print(ANDROID_LOG_INFO, "MINI", __VA_ARGS__)
+#define MINILOGW(...) __android_log_print(ANDROID_LOG_WARN, "MINI", __VA_ARGS__)
+#define MINILOGE(...) __android_log_print(ANDROID_LOG_ERROR, "MINI", __VA_ARGS__)
 
 enum {
   QUIRK_DUMB            = 1,
