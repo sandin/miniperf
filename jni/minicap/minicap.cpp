@@ -41,6 +41,8 @@ enum {
   QUIRK_TEAR            = 4,
 };
 
+
+
 static void
 usage(const char* pname) {
   fprintf(stderr,
@@ -511,10 +513,10 @@ std::cout << "serverBegin" << std::endl;
     MCINFO("New client connection");
     // MINILOGE("New client connection");
     //pumps发送指令
-    if (pumps(fd, banner, BANNER_SIZE) < 0) {
-      close(fd);
-      continue;
-    }
+    // if (pumps(fd, banner, BANNER_SIZE) < 0) {
+    //   close(fd);
+    //   continue;
+    // }
     
 
     int pending, err;
@@ -568,9 +570,43 @@ std::cout << "serverBegin" << std::endl;
       putUInt32LE(data, size);
       std::string str = (char *) data;
       std::cout<<(uint32_t)data[0]<<std::endl<<(uint32_t)data[1]<<std::endl<<(uint32_t)data[2]<<std::endl<<(uint32_t)data[3]<<std::endl<<"-----------------------------"<<std::endl;
+      str.erase(0,4);
       screenshot.set_data(str);
-      if (pumps(fd, data, size + 4) < 0) {
+      int nowDirection;
+      Minicap::DisplayInfo info;
+      if (minicap_try_get_display_info(displayId, &info) != 0) {
+        if (try_get_framebuffer_display_info(displayId, &info) != 0) {
+          MCERROR("Unable to get display info");
+          return EXIT_FAILURE;
+        }
+      }
+      switch (info.orientation) {
+      case Minicap::ORIENTATION_0:
+        screenshot.set_orientation(perfcat::Screenshot_Orientation::Screenshot_Orientation_none);
         break;
+      case Minicap::ORIENTATION_90:
+        screenshot.set_orientation(perfcat::Screenshot_Orientation::Screenshot_Orientation_landscape_left);
+        break;
+      case Minicap::ORIENTATION_180:
+        screenshot.set_orientation(perfcat::Screenshot_Orientation::Screenshot_Orientation_portrait);
+        break;
+      case Minicap::ORIENTATION_270:
+        screenshot.set_orientation(perfcat::Screenshot_Orientation::Screenshot_Orientation_landscape_right);
+        break;
+      }
+
+      
+      // if (pumps(fd, data, size + 4) < 0) {
+      //   break;
+      // }
+      int sizes = screenshot.ByteSize();
+      void *buffer = malloc(sizes);
+      screenshot.SerializeToArray(buffer, sizes);
+      if (pumps(fd, (unsigned char*)sizes, 4) < 0) {
+         break;
+      }
+      if (pumps(fd, (unsigned char*)buffer, sizes) < 0) {
+         break;
       }
       
       
