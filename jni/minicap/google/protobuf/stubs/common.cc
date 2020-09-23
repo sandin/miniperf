@@ -37,7 +37,9 @@
 #include <sstream>
 #include <stdio.h>
 #include <vector>
-
+#ifndef HAVE_PTHREAD
+#define HAVE_PTHREAD
+#endif
 #ifdef _WIN32
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN  // We only need minimal includes
@@ -147,16 +149,16 @@ inline void DefaultLogHandler(LogLevel level, const char* filename, int line,
        << line << "] " << message.c_str();
 
   // Output the log string the Android log at the appropriate level.
-  __android_log_write(android_log_level, "libprotobuf-native",
-                      ostr.str().c_str());
+  // __android_log_write(android_log_level, "libprotobuf-native",
+  //                     ostr.str().c_str());
   // Also output to std::cerr.
   fprintf(stderr, "%s", ostr.str().c_str());
   fflush(stderr);
 
   // Indicate termination if needed.
   if (android_log_level == ANDROID_LOG_FATAL) {
-    __android_log_write(ANDROID_LOG_FATAL, "libprotobuf-native",
-                        "terminating.\n");
+    // __android_log_write(ANDROID_LOG_FATAL, "libprotobuf-native",
+    //                     "terminating.\n");
   }
 }
 

@@ -36,7 +36,7 @@ SimpleServer::start(const char* sockname) {
     return -1;
   }
 
-  ::listen(sfd, 1);
+  ::listen(sfd, 5);
 
   mFd = sfd;
 

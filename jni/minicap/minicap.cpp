@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <thread>
 #include <android/log.h>
+#include <string>
 
 #include <cmath>
 #include <condition_variable>
@@ -27,12 +28,12 @@
 #define BANNER_VERSION 1
 #define BANNER_SIZE 24
 
-#define DEFAULT_SOCKET_NAME "minicap"
+#define DEFAULT_SOCKET_NAME "miniperfServer"
 #define DEFAULT_DISPLAY_ID 0
 #define DEFAULT_JPG_QUALITY 80
-#define MINIOGI(...) __android_log_print(ANDROID_LOG_INFO, "MINI", __VA_ARGS__)
-#define MINILOGW(...) __android_log_print(ANDROID_LOG_WARN, "MINI", __VA_ARGS__)
-#define MINILOGE(...) __android_log_print(ANDROID_LOG_ERROR, "MINI", __VA_ARGS__)
+// #define MINIOGI(...) __android_log_print(ANDROID_LOG_INFO, "MINI", __VA_ARGS__)
+// #define MINILOGW(...) __android_log_print(ANDROID_LOG_WARN, "MINI", __VA_ARGS__)
+// #define MINILOGE(...) __android_log_print(ANDROID_LOG_ERROR, "MINI", __VA_ARGS__)
 
 enum {
   QUIRK_DUMB            = 1,
@@ -211,6 +212,8 @@ signal_handler(int signum) {
   }
 }
 
+perfcat::Screenshot screenshot;
+
 int
 main(int argc, char* argv[]) {
   const char* pname = argv[0];
@@ -223,7 +226,7 @@ main(int argc, char* argv[]) {
   bool skipFrames = false;
   bool testOnly = false;
   Projection proj;
-
+  /*
   int opt;
   while ((opt = getopt(argc, argv, "d:n:P:Q:r:siSth")) != -1) {
     float frameRate;
@@ -277,7 +280,13 @@ main(int argc, char* argv[]) {
       return EXIT_FAILURE;
     }
   }
-
+  */
+  framePeriodMs = 1000/0.5;
+  skipFrames = true;
+  // std::string a = "1080x1920@1080x1920/0";
+  // Projection::Parser parser;
+  // parser.parse(proj, a.c_str(), a.c_str() + strlen(a.c_str()));
+  //testOnly = true;
   // Set up signal handler.
   struct sigaction sa;
   memset(&sa, 0, sizeof(sa));
@@ -333,6 +342,35 @@ main(int argc, char* argv[]) {
 
     return EXIT_SUCCESS;
   }
+  Minicap::DisplayInfo info;
+  if (minicap_try_get_display_info(displayId, &info) != 0) {
+      if (try_get_framebuffer_display_info(displayId, &info) != 0) {
+        MCERROR("Unable to get display info");
+        return EXIT_FAILURE;
+      }
+  }
+  int rotation;
+    switch (info.orientation) {
+    case Minicap::ORIENTATION_0:
+      rotation = 0;
+      break;
+    case Minicap::ORIENTATION_90:
+      rotation = 90;
+      break;
+    case Minicap::ORIENTATION_180:
+      rotation = 180;
+      break;
+    case Minicap::ORIENTATION_270:
+      rotation = 270;
+      break;
+    }
+  std::string a;
+  //a = std::to_string(info.width) + "x" + std::to_string(info.height) + "@" + std::to_string(int((info.width+2.9)/3.0)) + "x" + std::to_string(int((((info.height*10)/3.0)+9)/10)) + "/" + qstd::to_string(rotation) ;
+  a = std::to_string(info.width) + "x" + std::to_string(info.height) + "@" + std::to_string(int((info.width)/3.0)) + "x" + std::to_string(int((info.height)/3.0)) + "/" + std::to_string(rotation) ;
+
+  Projection::Parser parser;
+  parser.parse(proj, a.c_str(), a.c_str() + strlen(a.c_str()));
+  std::cout<<a;
 
   proj.forceMaximumSize();
   proj.forceAspectRatio();
@@ -446,7 +484,7 @@ main(int argc, char* argv[]) {
     std::cout << "OK" << std::endl;
     return EXIT_SUCCESS;
   }
-
+std::cout << "serverBegin" << std::endl;
 //开始建立socket
   if (!server.start(sockname)) {
     MCERROR("Unable to start server on namespace '%s'", sockname);
@@ -465,12 +503,13 @@ main(int argc, char* argv[]) {
   putUInt32LE(banner + 18, desiredInfo.height);
   banner[22] = (unsigned char) desiredInfo.orientation;
   banner[23] = quirks;
-
+  std::cout << "Wait a client" << std::endl;
+  //MINILOGE("Wait a client");
   //接收到client的请求
   int fd;
   while (!gWaiter.isStopped() && (fd = server.accept()) > 0) {
     MCINFO("New client connection");
-
+    // MINILOGE("New client connection");
     //pumps发送指令
     if (pumps(fd, banner, BANNER_SIZE) < 0) {
       close(fd);
@@ -526,12 +565,15 @@ main(int argc, char* argv[]) {
       // about other clients.
       unsigned char* data = encoder.getEncodedData() - 4;
       size_t size = encoder.getEncodedSize();
-
       putUInt32LE(data, size);
-
+      std::string str = (char *) data;
+      std::cout<<(uint32_t)data[0]<<std::endl<<(uint32_t)data[1]<<std::endl<<(uint32_t)data[2]<<std::endl<<(uint32_t)data[3]<<std::endl<<"-----------------------------"<<std::endl;
+      screenshot.set_data(str);
       if (pumps(fd, data, size + 4) < 0) {
         break;
       }
+      
+      
 
       // This will call onFrameAvailable() on older devices, so we have
       // to do it here or the loop will stop.
