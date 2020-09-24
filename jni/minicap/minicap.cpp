@@ -569,19 +569,6 @@ int main(int argc, char *argv[])
     while (!gWaiter.isStopped() && (pending = gWaiter.waitForFrame()) > 0)
     {
       auto frameAvailableAt = std::chrono::steady_clock::now();
-      if (minicap->setDesiredInfo(desiredInfo) != 0)
-  {
-    MCERROR("Minicap did not accept desired display info");
-    goto disaster;
-  }
-
-  minicap->setFrameAvailableListener(&gWaiter);
-
-  if (minicap->applyConfigChanges() != 0)
-  {
-    MCERROR("Unable to start minicap with current config");
-    goto disaster;
-  }
       if (skipFrames && pending > 1)
       {
         // Skip frames if we have too many. Not particularly thread safe,
