@@ -31,9 +31,6 @@
 #define DEFAULT_SOCKET_NAME "miniperfServer"
 #define DEFAULT_DISPLAY_ID 0
 #define DEFAULT_JPG_QUALITY 80
-// #define MINIOGI(...) __android_log_print(ANDROID_LOG_INFO, "MINI", __VA_ARGS__)
-// #define MINILOGW(...) __android_log_print(ANDROID_LOG_WARN, "MINI", __VA_ARGS__)
-// #define MINILOGE(...) __android_log_print(ANDROID_LOG_ERROR, "MINI", __VA_ARGS__)
 
 enum
 {
@@ -322,7 +319,7 @@ int main(int argc, char *argv[])
   if (showInfo)
   {
     Minicap::DisplayInfo info;
-
+    int rotation;
     if (minicap_try_get_display_info(displayId, &info) != 0)
     {
       if (try_get_framebuffer_display_info(displayId, &info) != 0)
@@ -331,8 +328,6 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
       }
     }
-
-    int rotation;
     switch (info.orientation)
     {
     case Minicap::ORIENTATION_0:
@@ -568,6 +563,50 @@ int main(int argc, char *argv[])
     int pending, err;
     while (!gWaiter.isStopped() && (pending = gWaiter.waitForFrame()) > 0)
     {
+      if (minicap_try_get_display_info(displayId, &info) != 0)
+      {
+        if (try_get_framebuffer_display_info(displayId, &info) != 0)
+        {
+          MCERROR("Unable to get display info");
+          return EXIT_FAILURE;
+        }
+      }
+      if (desiredInfo.orientation != info.orientation)
+      {
+        switch (info.orientation)
+        {
+        case Minicap::ORIENTATION_0:
+          rotation = 0;
+          screenshot.set_orientation(perfcat::Screenshot_Orientation::Screenshot_Orientation_none);
+          break;
+        case Minicap::ORIENTATION_90:
+          rotation = 90;
+          screenshot.set_orientation(perfcat::Screenshot_Orientation::Screenshot_Orientation_landscape_left);
+          break;
+        case Minicap::ORIENTATION_180:
+          rotation = 180;
+          screenshot.set_orientation(perfcat::Screenshot_Orientation::Screenshot_Orientation_portrait);
+          break;
+        case Minicap::ORIENTATION_270:
+          rotation = 270;
+          screenshot.set_orientation(perfcat::Screenshot_Orientation::Screenshot_Orientation_landscape_right);
+          break;
+        }
+        desiredInfo.orientation = info.orientation;
+        if (minicap->setDesiredInfo(desiredInfo) != 0)
+        {
+          MCERROR("Minicap did not accept desired display info");
+          goto disaster;
+        }
+
+        if (minicap->applyConfigChanges() != 0)
+        {
+          MCERROR("Unable to start minicap with current config");
+          goto disaster;
+        }
+        else
+          continue;
+      }
       auto frameAvailableAt = std::chrono::steady_clock::now();
       if (skipFrames && pending > 1)
       {
@@ -618,6 +657,8 @@ int main(int argc, char *argv[])
         MCERROR("Unable to encode frame");
         goto disaster;
       }
+      int nowDirection;
+      Minicap::DisplayInfo info;
 
       // Push it out synchronously because it's fast and we don't care
       // about other clients.
@@ -625,34 +666,9 @@ int main(int argc, char *argv[])
       size_t size = encoder.getEncodedSize();
       putUInt32LE(data, size);
       void *tmp = malloc(size);
-      std::cout<<size<<std::endl;
-      memcpy(tmp,data+4,size);
-      screenshot.set_data(tmp,size);
-      int nowDirection;
-      Minicap::DisplayInfo info;
-      if (minicap_try_get_display_info(displayId, &info) != 0)
-      {
-        if (try_get_framebuffer_display_info(displayId, &info) != 0)
-        {
-          MCERROR("Unable to get display info");
-          return EXIT_FAILURE;
-        }
-      }
-      switch (info.orientation)
-      {
-      case Minicap::ORIENTATION_0:
-        screenshot.set_orientation(perfcat::Screenshot_Orientation::Screenshot_Orientation_none);
-        break;
-      case Minicap::ORIENTATION_90:
-        screenshot.set_orientation(perfcat::Screenshot_Orientation::Screenshot_Orientation_landscape_left);
-        break;
-      case Minicap::ORIENTATION_180:
-        screenshot.set_orientation(perfcat::Screenshot_Orientation::Screenshot_Orientation_portrait);
-        break;
-      case Minicap::ORIENTATION_270:
-        screenshot.set_orientation(perfcat::Screenshot_Orientation::Screenshot_Orientation_landscape_right);
-        break;
-      }
+      std::cout << size << std::endl;
+      memcpy(tmp, data + 4, size);
+      screenshot.set_data(tmp, size);
 
       // if (pumps(fd, data, size + 4) < 0) {
       //   break;

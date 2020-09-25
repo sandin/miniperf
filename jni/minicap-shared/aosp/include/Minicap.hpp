@@ -118,6 +118,7 @@ public:
 
 // Attempt to get information about the given display. This may segfault
 // on some devices due to manufacturer (mainly Samsung) customizations.
+//获取信息（有些设备会失败三星）
 int
 minicap_try_get_display_info(int32_t displayId, Minicap::DisplayInfo* info);
 
